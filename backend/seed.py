@@ -33,9 +33,34 @@ def main():
             created_by text NOT NULL
         )"""
     )
-    cur.execute("SELECT COUNT(*) FROM cuppings")
-    if cur.fetchone()[0] == 0:
-        for lot, aroma, taste, liquor in (("春茶-A", 8, 8, 7), ("夏茶-C", 5, 4, 6)):
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS mother_lots (
+            id serial PRIMARY KEY,
+            name text NOT NULL UNIQUE,
+            created_by text NOT NULL,
+            created_at timestamptz NOT NULL DEFAULT now()
+        )"""
+    )
+    # 子批的钉入/剔除都落事件：当前成员 = 最新一条事件未被 remove 的批次。
+    # 剔除不删事件，履历永久保留。
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS mother_lot_events (
+            id serial PRIMARY KEY,
+            mother_id integer NOT NULL REFERENCES mother_lots(id),
+            lot text NOT NULL,
+            action text NOT NULL CHECK (action IN ('add', 'remove')),
+            acted_by text NOT NULL,
+            acted_at timestamptz NOT NULL DEFAULT now()
+        )"""
+    )
+    for lot, aroma, taste, liquor in (
+        ("春茶-A", 8, 8, 7),
+        ("夏茶-C", 5, 4, 6),
+        ("春茶甲", 8, 8, 8),
+        ("春芽", 7, 7, 7),
+    ):
+        cur.execute("SELECT 1 FROM cuppings WHERE lot = %s LIMIT 1", (lot,))
+        if cur.fetchone() is None:
             verdict, note, score = weigh(aroma, taste, liquor)
             cur.execute(
                 """INSERT INTO cuppings (lot, aroma, taste, liquor, score, verdict, note, created_by)

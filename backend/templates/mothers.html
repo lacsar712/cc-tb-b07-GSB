@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>母批报告</h1>
+{% if can_write %}
+<form method="post" action="{{ url_for('create_mother') }}">
+  <h2>钉成母批</h2>
+  <input name="name" placeholder="母批名称" required />
+  <button>新建母批</button>
+</form>
+{% endif %}
+<table>
+  <thead><tr><th>母批</th><th>子批数</th><th>服务端均分</th><th></th></tr></thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td><a href="{{ url_for('mother_detail', mother_id=item.id) }}">{{ item.name }}</a></td>
+      <td>{{ item.member_count }}</td>
+      <td>{% if item.average is not none %}{{ item.average }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td><a href="{{ url_for('mother_detail', mother_id=item.id) }}">查看报告</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="muted">还没有母批。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

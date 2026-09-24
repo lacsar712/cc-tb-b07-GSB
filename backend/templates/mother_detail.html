@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block body %}
+<p><a href="{{ url_for('mothers') }}">← 母批报告列表</a></p>
+<h1>母批：{{ mother.name }}</h1>
+<p>服务端母批均分（各在册子批最新加权分的平均）：
+  <span class="avg">{% if average is not none %}{{ average }}{% else %}<span class="muted">—</span>{% endif %}</span>
+</p>
+
+<h2>子批名单</h2>
+<table>
+  <thead><tr><th>子批</th><th>最新加权分</th><th>结论</th><th>说明</th>{% if can_write %}<th>操作</th>{% endif %}</tr></thead>
+  <tbody>
+    {% for m in members %}
+    <tr>
+      <td>{{ m.lot }}</td>
+      <td>{% if m.score is not none %}{{ m.score }}{% else %}<span class="muted">无审评</span>{% endif %}</td>
+      <td class="{% if m.verdict == '通过' %}pass{% elif m.verdict %}fail{% endif %}">{{ m.verdict or '—' }}</td>
+      <td>{{ m.note or '—' }}</td>
+      {% if can_write %}
+      <td>
+        <form method="post" action="{{ url_for('remove_member', mother_id=mother.id) }}"
+              onsubmit="return confirm('确认从母批剔除 {{ m.lot }}？剔除会保留履历。');" style="display:inline; margin:0; padding:0;">
+          <input type="hidden" name="lot" value="{{ m.lot }}" />
+          <button>剔除</button>
+        </form>
+      </td>
+      {% endif %}
+    </tr>
+    {% else %}
+    <tr><td colspan="{{ 5 if can_write else 4 }}" class="muted">册下暂无子批。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if can_write %}
+<form method="post" action="{{ url_for('add_member', mother_id=mother.id) }}">
+  <h2>钉入子批</h2>
+  {% if available_lots %}
+  <select name="lot" required>
+    {% for lot in available_lots %}<option value="{{ lot }}">{{ lot }}</option>{% endfor %}
+  </select>
+  <button>钉入母批</button>
+  {% else %}
+  <p class="muted">所有已有审评记录的子批都已在册。先到审评记录页提交新批次审评后再来钉入。</p>
+  {% endif %}
+</form>
+{% endif %}
+
+<h2>履历</h2>
+<ul class="history">
+  {% for e in events %}
+  <li>
+    {% if e.action == 'add' %}
+      <span class="tag-add">钉入</span>
+    {% else %}
+      <span class="tag-remove">剔除</span>
+    {% endif %}
+    子批 <strong>{{ e.lot }}</strong> —— {{ e.acted_by }} 于 {{ e.acted_at.strftime('%Y-%m-%d %H:%M:%S') }}
+  </li>
+  {% else %}
+  <li class="muted">暂无履历。</li>
+  {% endfor %}
+</ul>
+{% endblock %}
