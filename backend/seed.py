@@ -30,8 +30,33 @@ def main():
             score double precision NOT NULL,
             verdict text NOT NULL,
             note text NOT NULL,
-            created_by text NOT NULL
+            created_by text NOT NULL,
+            created_at timestamptz NOT NULL DEFAULT now()
         )"""
+    )
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS blends (
+            id serial PRIMARY KEY,
+            name text NOT NULL,
+            created_by text NOT NULL,
+            created_at timestamptz NOT NULL DEFAULT now()
+        )"""
+    )
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS blend_lots (
+            id serial PRIMARY KEY,
+            blend_id integer NOT NULL REFERENCES blends (id) ON DELETE CASCADE,
+            lot text NOT NULL,
+            pinned_by text NOT NULL,
+            pinned_at timestamptz NOT NULL DEFAULT now(),
+            removed_by text,
+            removed_at timestamptz
+        )"""
+    )
+    cur.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS blend_lots_active_lot_ux
+               ON blend_lots (blend_id, lot)
+            WHERE removed_at IS NULL"""
     )
     cur.execute("SELECT COUNT(*) FROM cuppings")
     if cur.fetchone()[0] == 0:

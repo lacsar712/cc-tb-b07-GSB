@@ -9,6 +9,26 @@
   <input name="liquor" type="number" step="0.1" min="0" max="10" placeholder="汤色" required />
   <button>提交</button>
 </form>
+
+<form method="post" action="{{ url_for('create_blend') }}">
+  <h2>钉成母批</h2>
+  <input name="name" placeholder="母批名称" required />
+  {% if lots %}
+  <ul style="list-style:none; padding:0;">
+    {% for lot in lots %}
+    <li>
+      <label>
+        <input type="checkbox" name="lots" value="{{ lot.lot }}" />
+        {{ lot.lot }}（最新加权分 {{ lot.score }}）
+      </label>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>尚无已审评批次可钉。</p>
+  {% endif %}
+  <button>钉成母批</button>
+</form>
 {% endif %}
 <table>
   <thead><tr><th>批次</th><th>加权分</th><th>结论</th><th>说明</th></tr></thead>

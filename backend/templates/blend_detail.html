@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block body %}
+<p><a href="{{ url_for('blends') }}">← 返回母批报告</a></p>
+<h1>母批：{{ blend.name }}</h1>
+<p>钉成人 {{ blend.created_by }} · {{ blend.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+
+<h2>子批名单与最新加权分</h2>
+{% if members %}
+<table>
+  <thead><tr><th>子批</th><th>最新加权分</th><th>结论</th><th>钉入时间</th>{% if can_write %}<th>操作</th>{% endif %}</tr></thead>
+  <tbody>
+    {% for m in members %}
+    <tr>
+      <td>{{ m.lot }}</td>
+      <td>{{ m.lot_score }}</td>
+      <td class="{% if m.verdict == '通过' %}pass{% else %}fail{% endif %}">{{ m.verdict }}</td>
+      <td>{{ m.pinned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      {% if can_write %}
+      <td>
+        <form method="post" action="{{ url_for('remove_lot', blend_id=blend.id) }}"
+              onsubmit="return confirm('确认剔除子批 {{ m.lot }}？履历会保留。');"
+              style="background:none; padding:0; margin:0;">
+          <input type="hidden" name="lot" value="{{ m.lot }}" />
+          <button>剔除</button>
+        </form>
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p>母批均分（服务端按各子批最新加权分实时计算）：<strong style="font-size:1.2em;">{{ avg_score }}</strong></p>
+{% else %}
+<p>当前母批下没有在册子批（均分暂不可计）。</p>
+{% endif %}
+
+{% if can_write and available %}
+<form method="post" action="{{ url_for('pin_lot', blend_id=blend.id) }}">
+  <h2>追加钉入子批</h2>
+  <select name="lot" required>
+    {% for lot in available %}<option value="{{ lot }}">{{ lot }}</option>{% endfor %}
+  </select>
+  <button>钉入</button>
+</form>
+{% endif %}
+
+<h2>履历</h2>
+<table>
+  <thead><tr><th>子批</th><th>动作</th><th>操作人</th><th>时间</th></tr></thead>
+  <tbody>
+    {% for h in history %}
+    <tr>
+      <td>{{ h.lot }}</td>
+      <td>
+        {% if h.removed_at %}
+          钉入后已于 {{ h.removed_at.strftime('%Y-%m-%d %H:%M') }} 剔除
+        {% else %}
+          在册
+        {% endif %}
+      </td>
+      <td>钉入：{{ h.pinned_by }}{% if h.removed_by %} · 剔除：{{ h.removed_by }}{% endif %}</td>
+      <td>{{ h.pinned_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>母批报告</h1>
+
+{% if can_write %}
+<form method="post" action="{{ url_for('create_blend') }}">
+  <h2>钉成母批</h2>
+  <input name="name" placeholder="母批名称" required />
+  {% if lots %}
+  <ul style="list-style:none; padding:0;">
+    {% for lot in lots %}
+    <li>
+      <label>
+        <input type="checkbox" name="lots" value="{{ lot }}" />
+        {{ lot }}
+      </label>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>尚无已审评批次可钉。</p>
+  {% endif %}
+  <button>钉成母批</button>
+</form>
+{% endif %}
+
+{% if reports %}
+<table>
+  <thead>
+    <tr><th>母批</th><th>子批名单</th><th>各子批最新加权分</th><th>母批均分（服务端）</th></tr>
+  </thead>
+  <tbody>
+    {% for r in reports %}
+    <tr>
+      <td><a href="{{ url_for('blend_detail', blend_id=r.id) }}">{{ r.name }}</a></td>
+      <td>{{ r.members | map(attribute='lot') | join('、') }}</td>
+      <td>{{ r.members | map(attribute='lot_score') | join(' / ') }}</td>
+      <td><strong>{{ r.avg_score }}</strong></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>还没有母批。</p>
+{% endif %}
+{% endblock %}
